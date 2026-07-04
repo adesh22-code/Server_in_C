@@ -70,17 +70,28 @@ int main()
 
     int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
 
-if (bytes_received == -1)
-{
-    perror("recv failed");
-}
-else
-{
-    buffer[bytes_received] = '\0';
-    printf("\nReceived %d bytes:\n\n", bytes_received);
-    printf("%s\n", buffer);
-}
+    if (bytes_received == -1)
+    {
+        perror("recv failed");
+    }
+    else
+    {
+        buffer[bytes_received] = '\0';
+        printf("\nReceived %d bytes:\n\n", bytes_received);
+        printf("%s\n", buffer);
+    }
 
+    
+    char response[] =
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/plain\r\n"
+    "Content-Length: 13\r\n"
+    "\r\n"
+    "Hello, World!";
+
+    send(client_socket, response, strlen(response), 0);
+    printf("\nResponse sent successfully!\n");
+    
     close(client_socket);
     close(server_socket);
 
