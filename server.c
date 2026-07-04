@@ -11,6 +11,7 @@ int main()
 {
     int server_socket;
     int client_socket;
+    char buffer[4096];
 
     struct sockaddr_in server_addr;
 
@@ -66,6 +67,19 @@ int main()
     }
 
     printf("Client connected!\n");
+
+    int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+
+if (bytes_received == -1)
+{
+    perror("recv failed");
+}
+else
+{
+    buffer[bytes_received] = '\0';
+    printf("\nReceived %d bytes:\n\n", bytes_received);
+    printf("%s\n", buffer);
+}
 
     close(client_socket);
     close(server_socket);
