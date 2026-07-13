@@ -10,6 +10,8 @@
 #define PORT 8080
 #define BUFFER_SIZE 4096
 
+char* read_file_to_buffer(const char *filename, long *out_size);
+
 int main()
 {
     int server_socket;
@@ -81,62 +83,37 @@ int main()
         buffer[bytes_received] = '\0';
         printf("Received HTTP Request.\n");
 
-        // --- STEP 1: OPEN FILE FROM DISK ---
-        FILE *html_file = fopen("index.html", "r");
         
-        if (html_file == NULL)
-        {
-            // Fallback error response if index.html is missing
-            char error_response[] =
-                "HTTP/1.1 404 Not Found\r\n"
-                "Content-Type: text/plain\r\n"
-                "Content-Length: 26\r\n"
-                "Connection: close\r\n\r\n"
-                "Error 404: File Not Found";
-            send(client_socket, error_response, strlen(error_response), 0);
-            printf("File index.html missing! Sent 404.\n");
-        }
-        else
-        {
-            // --- STEP 2: MEASURE FILE CARGO SIZE ---
-            fseek(html_file, 0, SEEK_END);      // Move cursor to the end
-            long file_size = ftell(html_file);   // Find position byte offset
-            rewind(html_file);                  // Move cursor back to beginning
-
-            // Allocate dynamic memory block matching file size + null terminator
-            char *file_content = malloc(file_size + 1);
-            
-            // Read all characters from disk straight into our layout variable
-            fread(file_content, 1, file_size, html_file);
-            file_content[file_size] = '\0'; // Seal the string string safely
-            fclose(html_file);              // Close disk stream cleanly
-
-            // --- STEP 3: ASSEMBLE PROTOCOL HEADERS ---
-            char response_header[512];
-            sprintf(response_header,
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/html\r\n"
-                    "Content-Length: %ld\r\n"
-                    "Connection: close\r\n"
-                    "\r\n", 
-                    file_size);
-
-            // Transmit HTTP wrapper headers first
-            send(client_socket, response_header, strlen(response_header), 0);
-            
-            // Transmit HTML webpage cargo payload immediately after
-            send(client_socket, file_content, file_size, 0);
-            
-            printf("Served index.html file successfully (%ld bytes)!\n", file_size);
-
-            // Free dynamic memory allocation block
-            free(file_content);
-        }
-
-        // Close transaction with browser
+        
         close(client_socket);
     }
 
     close(server_socket);
     return 0;
+}
+
+
+char* read_file_to_buffer(const char *filename, long *out_size) {
+    // --- STEP 1: OPEN FILE FROM DISK ---
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        return NULL;
+    }
+
+    // Measure size
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+
+    // Allocate memory on Heap
+    char *content = malloc(size + 1);
+    if (content != NULL) {
+        fread(content, 1, size, file);
+        content[size] = '\0';
+        *out_size = size; // Pass the size back via pointer reference
+    }
+
+    fclose(file);
+    return content;
+    // Close transaction with browser
 }
