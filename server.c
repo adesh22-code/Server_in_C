@@ -58,7 +58,7 @@ int main()
         printf("Client connected!\n");
 
         // Serve index.html
-        handle_client(client_socket, "index.html");
+        handle_client(client_socket, "about.html");
 
         close(client_socket);
     }
